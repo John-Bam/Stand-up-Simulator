@@ -43,10 +43,6 @@ public class Fighter
     [Range(2, 5)] public int StanceSwitch = 2;
     [Range(2, 5)] public int HeadMovement = 2;
 
-    // Stance stat
-    [Header("Stance (2.0-5.0 Stars, 0.5 increments)")]
-    [Range(2f, 5f)] public float stanceStat = 2f;
-
     // STANCE SYSTEM
     public Stance naturalStance = Stance.Orthodox;
     public Stance currentStance = Stance.Orthodox;
@@ -157,7 +153,7 @@ public class Fighter
         if (!IsInWrongStance()) return 1.0f; // No penalty
 
         // Penalty = 40% - (8% × stance stat)
-        float penaltyPercent = 40f - (8f * stanceStat);
+        float penaltyPercent = 40f - (8f * StanceSwitch);
         penaltyPercent = Mathf.Max(0f, penaltyPercent); // Minimum 0% penalty
 
         return 1f - (penaltyPercent / 100f);
