@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
-    public class GameManager Instance;
+    public static GameManager Instance;
 
     [Header("Fighters")]
     public Fighter playerFighter;

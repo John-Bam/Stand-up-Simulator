@@ -13,41 +13,41 @@ public class Fighter
 {
     public string fighterName;
 
-    // Health STATS (2.0-5.0 STARS with 0.5 increments)
-    [Header("Health Stats (2.0-5.0 Stars, 0.5 increments)")]
-    [Range(2, 5)] public int HeadHealth = 2;
-    [Range(2, 5)] public int BodyHealth = 2;
-    [Range(2, 5)] public int LegHealth = 2;
-    [Range(2, 5)] public int Cardio = 2;
-    [Range(2, 5)] public int Block = 2;
-    [Range(2, 5)] public int Recovery = 2;
-    [Range(2, 5)] public int CutResistance = 2;
+    // BASE STATS (2.0-5.0 STARS with 0.5 increments) - CamelCase naming
+    [Header("Base Stats (2.0-5.0 Stars, 0.5 increments)")]
+    [Range(2f, 5f)] public float HeadHealth = 2f;
+    [Range(2f, 5f)] public float BodyHealth = 2f;
+    [Range(2f, 5f)] public float LegHealth = 2f;
+    [Range(2f, 5f)] public float Cardio = 2f;
+    [Range(2f, 5f)] public float Block = 2f;
+    [Range(2f, 5f)] public float Recovery = 2f;
+    [Range(2f, 5f)] public float CutResistance = 2f;
 
-    // Striking STATS (2.0-5.0 STARS with 0.5 increments)
+    // Striking Stats (2.0-5.0 stars)
     [Header("Striking Stats (2.0-5.0 Stars, 0.5 increments)")]
-    [Range(2, 5)] public int PunchSpeed = 2;
-    [Range(2, 5)] public int PunchPower = 2;
-    [Range(2, 5)] public int KickSpeed = 2;
-    [Range(2, 5)] public int KickPower = 2;
-    [Range(2, 5)] public int Accuracy = 2;
+    [Range(2f, 5f)] public float PunchSpeed = 2f;
+    [Range(2f, 5f)] public float PunchPower = 2f;
+    [Range(2f, 5f)] public float KickSpeed = 2f;
+    [Range(2f, 5f)] public float KickPower = 2f;
+    [Range(2f, 5f)] public float FootWork = 2f;
+    [Range(2f, 5f)] public float HeadMovement = 2f;
+    [Range(2f, 5f)] public float Accuracy = 2f;
 
-    // Grappling STATS (2.0-5.0 STARS with 0.5 increments)
+    // Grappling Stats (2.0-5.0 stars)
     [Header("Grappling Stats (2.0-5.0 Stars, 0.5 increments)")]
-    [Range(2, 5)] public int Clinch = 2;
-    [Range(2, 5)] public int GrappleOffense = 2;
-    [Range(2, 5)] public int GrappleDefense = 2;
+    [Range(2f, 5f)] public float Clinch = 2f;
+    [Range(2f, 5f)] public float GrappleDefense = 2f;
+    [Range(2f, 5f)] public float GrappleOffense = 2f;
 
-    // Mobility STATS (2.0-5.0 STARS with 0.5 increments)
-    [Header("Mobility Stats (2.0-5.0 Stars, 0.5 increments)")]
-    [Range(2, 5)] public int FootWork = 2;
-    [Range(2, 5)] public int StanceSwitch = 2;
-    [Range(2, 5)] public int HeadMovement = 2;
+    // Stance stat
+    [Header("Stance (2.0-5.0 Stars, 0.5 increments)")]
+    [Range(2f, 5f)] public float StanceSwitch = 2f;  // FIXED: renamed from stanceStat
 
     // STANCE SYSTEM
     public Stance naturalStance = Stance.Orthodox;
     public Stance currentStance = Stance.Orthodox;
 
-    // CALCULATED POOLS
+    // CALCULATED POOLS (lowercase for runtime values)
     [Header("Current Pools")]
     public float headHealth;
     public float bodyHealth;
@@ -86,13 +86,14 @@ public class Fighter
 
     [NonSerialized] public int initiative;
 
-    public Fighter(String name, Stance preferredStance = Stance.Orthodox)
+    public Fighter(string name, Stance preferredStance = Stance.Orthodox)
     {
         fighterName = name;
         naturalStance = preferredStance;
         currentStance = preferredStance;
         InitializePools();
     }
+
     public void InitializePools()
     {
         // head health = 10 + 5 × star
@@ -107,7 +108,7 @@ public class Fighter
         maxLegHealth = 15f + (5f * LegHealth);
         legHealth = maxLegHealth;
 
-        // stamina = 10 + 5 × star (cardio stat)
+        // stamina = 10 + 5 × star (Cardio stat)
         maxStamina = 10f + (5f * Cardio);
         stamina = maxStamina;
 
@@ -150,11 +151,11 @@ public class Fighter
     // Calculate wrong stance damage penalty
     public float GetWrongStancePenalty()
     {
-        if (!IsInWrongStance()) return 1.0f; // No penalty
+        if (!IsInWrongStance()) return 1.0f;
 
         // Penalty = 40% - (8% × stance stat)
         float penaltyPercent = 40f - (8f * StanceSwitch);
-        penaltyPercent = Mathf.Max(0f, penaltyPercent); // Minimum 0% penalty
+        penaltyPercent = Mathf.Max(0f, penaltyPercent);
 
         return 1f - (penaltyPercent / 100f);
     }
@@ -183,12 +184,12 @@ public class Fighter
                 if (bodyHealth <= 0) bodyHealth = 0;
 
                 // BODY HITS DRAIN STAMINA
-                float staminaDrain = damage * 0.5f; // 50% of body damage
+                float staminaDrain = damage * 0.5f;
 
                 // If below 50% stamina, drain more
                 if (IsFatigued())
                 {
-                    staminaDrain *= 1.5f; // 50% more stamina drain
+                    staminaDrain *= 1.5f;
                 }
 
                 UseStamina(staminaDrain);
@@ -198,7 +199,6 @@ public class Fighter
                 if (legHealth <= 0) legHealth = 0;
                 break;
         }
-
     }
 
     // Block damage with punch power affecting guard degradation
@@ -223,7 +223,7 @@ public class Fighter
 
         // PUNCH POWER AFFECTS GUARD DEGRADATION
         float baseDegradation = damageBlocked * 0.3f;
-        float powerBonus = attackerPunchPower * 2f; // 2 points per star
+        float powerBonus = attackerPunchPower * 2f;
         float totalDegradation = baseDegradation + powerBonus;
 
         blockValue -= totalDegradation;
@@ -249,6 +249,7 @@ public class Fighter
                 blockValue = maxBlockValue;
         }
     }
+
     public void ResetGuard()
     {
         isGuarding = true;
@@ -271,6 +272,7 @@ public class Fighter
             isRocked = false;
         }
     }
+
     public bool IsKnockedOut()
     {
         return headHealth <= 0 || bodyHealth <= 0;
@@ -281,11 +283,13 @@ public class Fighter
         stamina -= amount;
         if (stamina < 0) stamina = 0;
     }
+
     public void RecoverStamina(float amount)
     {
         stamina += amount;
         if (stamina > maxStamina) stamina = maxStamina;
     }
+
     public void EndOfRoundRecovery()
     {
         RecoverStamina(Recovery);
@@ -319,24 +323,25 @@ public class Fighter
         {
             case MoveCategory.Punch:
                 baseStat = PunchSpeed;
-                statName = "PunchSpeed";
+                statName = "punchSpeed";
                 break;
             case MoveCategory.Kick:
                 baseStat = KickSpeed;
-                statName = "KickSpeed";
+                statName = "kickSpeed";
                 break;
             case MoveCategory.Knee:
             case MoveCategory.Elbow:
                 baseStat = (PunchSpeed + KickSpeed) / 2f;
-                statName = "Mixed";
+                statName = "mixed";
                 break;
             case MoveCategory.Movement:
                 baseStat = FootWork;
-                statName = "footWork";
+                statName = "footwork";
                 break;
             default:
                 return 0f;
         }
+
         return GetEffectiveStat(baseStat, statName);
     }
 
@@ -355,11 +360,12 @@ public class Fighter
             case MoveCategory.Kick:
             case MoveCategory.Knee:
                 basePower = KickPower;
-                statName = "KickPower";
+                statName = "kickPower";
                 break;
             default:
                 return 0f;
         }
+
         return GetEffectiveStat(basePower, statName) * 0.2f;
     }
 
@@ -389,6 +395,7 @@ public class Fighter
 
         return status;
     }
+
     public string GetGuardStatus()
     {
         if (blockValue >= 80f)
@@ -399,24 +406,6 @@ public class Fighter
             return "WEAKENED";
         else
             return "BROKEN";
-    }
-
-    // Get star rating display with half stars
-    public string GetStarDisplay(float starValue)
-    {
-        int fullStars = Mathf.FloorToInt(starValue);
-        bool hasHalfStar = (starValue % 1f) >= 0.5f;
-
-        string display = new string('?', fullStars);
-        if (hasHalfStar)
-        {
-            display += "?"; // Half star
-        }
-
-        int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-        display += new string('?', emptyStars);
-
-        return display;
     }
 
     public float GetStaminaPercentage()
@@ -458,6 +447,4 @@ public class Fighter
             actionsRemaining--;
         }
     }
-
 }
-

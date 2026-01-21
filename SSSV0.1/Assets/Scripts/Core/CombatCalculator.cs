@@ -1,4 +1,5 @@
 using UnityEngine;
+
 public class CombatCalculator
 {
     // Calculate initiative for turn order
@@ -70,6 +71,7 @@ public class CombatCalculator
         float roll = Random.Range(0f, 100f);
         return roll < hitChance;
     }
+
     // Calculate damage WITH block processing
     public static DamageResult CalculateDamageWithBlock(Fighter attacker, Fighter defender, Move move, int actualDistance, bool isHit)
     {
@@ -147,7 +149,7 @@ public class CombatCalculator
         return Mathf.Max(0.3f, multiplier); // Minimum 30%
     }
 
-        // Calculate new distance after movement
+    // Calculate new distance after movement
     public static int CalculateNewDistance(int currentDistance, int movement, bool isClosing)
     {
         int newDistance = isClosing ? currentDistance - movement : currentDistance + movement;
@@ -164,6 +166,3 @@ public struct DamageResult
     public int staminaDrained;
     public bool wasBlocked;
 }
-
-
-    
