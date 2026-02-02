@@ -59,7 +59,7 @@ public class Fighter
     private float maxBodyHealth;
     private float maxLegHealth;
     private float maxStamina;
-    private float maxBlockValue;
+    public float maxBlockValue;
 
     // Combat state
     public bool isRocked = false;
