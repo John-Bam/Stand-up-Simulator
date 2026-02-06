@@ -47,16 +47,16 @@ public class Move
     public int movementAmount;
 
     // Constructor for attack moves
-    public Move(string name, MoveCategory cat, int spd, float pow, int rec, int eng,
+    public Move(string name, MoveCategory cat, int Speed, float Power, int Energy, int Recovery,
                 int optDist, int minDist, int maxDist, TargetZone target = TargetZone.Head,
                 StrikeHand hand = StrikeHand.Both)
     {
         moveName = name;
         category = cat;
-        speed = spd;
-        power = pow;
-        recovery = rec;
-        energy = eng;
+        speed = Speed;
+        power = Power;
+        energy = Energy;
+        recovery = Recovery;
         distance = optDist;
         minDistance = minDist;
         maxDistance = maxDist;
@@ -66,14 +66,14 @@ public class Move
         movementAmount = 0;
     }
     // Constructor for movement moves
-    public Move(string name, int spd, int rec, int eng, int moveAmount)
+    public Move(string name, int Speed, int Recovery, int Energy, int moveAmount)
     {
         moveName = name;
         category = MoveCategory.Movement;
-        speed = spd;
+        speed = Speed;
         power = 0;
-        recovery = rec;
-        energy = eng;
+        recovery = Recovery;
+        energy = Energy;
         distance = 0;
         minDistance = 0;
         maxDistance = 0;

@@ -1535,7 +1535,7 @@ MonoBehaviour:
     aggression: 0
     stanceSwitches: 0
   aiFighter:
-    fighterName: 
+    fighterName: Dummy
     HeadHealth: 0
     BodyHealth: 0
     LegHealth: 0
