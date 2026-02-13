@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -151,7 +151,12 @@ public class GameManager : MonoBehaviour
 
             buttonText += "\n";
 
-            if (!move.isMovement && move.category != MoveCategory.Guard && move.category != MoveCategory.StanceSwitch)
+            if (!move.isMovement
+                && move.category != MoveCategory.Guard
+                && move.category != MoveCategory.HighGuard
+                && move.category != MoveCategory.LowGuard
+                && move.category != MoveCategory.Wait
+                && move.category != MoveCategory.StanceSwitch)
             {
                 bool isLead = (move.strikeHand == StrikeHand.Lead);
                 int effectiveSpeed = move.GetEffectiveSpeed(isLead);
@@ -167,6 +172,18 @@ public class GameManager : MonoBehaviour
             else if (move.category == MoveCategory.StanceSwitch)
             {
                 buttonText += $"Spd:{move.speed} En:{move.energy} - Switch stance";
+            }
+            else if (move.category == MoveCategory.HighGuard)
+            {
+                buttonText += $"Spd:{move.speed} - Block + recover | Protects Head";
+            }
+            else if (move.category == MoveCategory.LowGuard)
+            {
+                buttonText += $"Spd:{move.speed} - Block + recover | Protects Body/Legs";
+            }
+            else if (move.category == MoveCategory.Wait)
+            {
+                buttonText += $"Spd:{move.speed} - Rest and recover stamina";
             }
             else
             {
@@ -237,9 +254,20 @@ public class GameManager : MonoBehaviour
 
             Move chosenMove = null;
 
+            // Very low stamina: Wait to recover
             if (aiFighter.stamina < 15 && i == 0)
             {
-                chosenMove = availableMoves.Find(m => m.moveName == "Guard");
+                chosenMove = availableMoves.Find(m => m.category == MoveCategory.Wait);
+            }
+            // Low-ish stamina: guard up
+            else if (aiFighter.stamina < 25 && i == 0)
+            {
+                // Pick guard type based on distance
+                // At range, expect head kicks; up close, expect body work
+                if (currentDistance >= 3)
+                    chosenMove = availableMoves.Find(m => m.category == MoveCategory.HighGuard);
+                else
+                    chosenMove = availableMoves.Find(m => m.category == MoveCategory.LowGuard);
             }
             else if (currentDistance <= 2)
             {
@@ -329,6 +357,8 @@ public class GameManager : MonoBehaviour
 
         playerFighter.isGuarding = false;
         aiFighter.isGuarding = false;
+        playerFighter.guardZone = GuardZone.None;
+        aiFighter.guardZone = GuardZone.None;
 
         playerFighter.EndOfRoundRecovery();
         aiFighter.EndOfRoundRecovery();
@@ -379,9 +409,43 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // HIGH GUARD
+        if (move.category == MoveCategory.HighGuard)
+        {
+            attacker.ResetGuard();
+            attacker.isGuarding = true;
+            attacker.guardZone = GuardZone.High;
+            attacker.RecoverStamina(5);
+            AddToCombatLog($"  {attacker.fighterName} raises HIGH GUARD! [Block: {attacker.blockValue:F0}] Protects Head");
+            return;
+        }
+
+        // LOW GUARD
+        if (move.category == MoveCategory.LowGuard)
+        {
+            attacker.ResetGuard();
+            attacker.isGuarding = true;
+            attacker.guardZone = GuardZone.Low;
+            attacker.RecoverStamina(5);
+            AddToCombatLog($"  {attacker.fighterName} drops to LOW GUARD! [Block: {attacker.blockValue:F0}] Protects Body/Legs");
+            return;
+        }
+
+        // WAIT - recover stamina, no blocking
+        if (move.category == MoveCategory.Wait)
+        {
+            int recovered = Mathf.RoundToInt(8f + attacker.Cardio * 1.5f);
+            attacker.RecoverStamina(recovered);
+            AddToCombatLog($"  {attacker.fighterName} waits and recovers {recovered} stamina! [Stam: {attacker.stamina:F0}/{attacker.maxStamina:F0}]");
+            return;
+        }
+
+        // Legacy guard fallback
         if (move.category == MoveCategory.Guard)
         {
             attacker.ResetGuard();
+            attacker.isGuarding = true;
+            attacker.guardZone = GuardZone.None;
             attacker.RecoverStamina(10);
             AddToCombatLog($"  {attacker.fighterName} guards! [Block: {attacker.blockValue:F0}]");
             return;
@@ -417,7 +481,13 @@ public class GameManager : MonoBehaviour
         if (dmg.wasBlocked)
         {
             float blockPct = (dmg.damageBlocked / dmg.rawDamage) * 100f;
-            AddToCombatLog($"  {attacker.fighterName} lands {move.moveName} {leadIndicator}{stanceWarning} but BLOCKED!");
+            string guardInfo = "";
+            if (defender.guardZone == GuardZone.High)
+                guardInfo = dmg.guardZoneMatch ? " (HIGH GUARD - good read!)" : " (HIGH GUARD - wrong zone!)";
+            else if (defender.guardZone == GuardZone.Low)
+                guardInfo = dmg.guardZoneMatch ? " (LOW GUARD - good read!)" : " (LOW GUARD - wrong zone!)";
+
+            AddToCombatLog($"  {attacker.fighterName} lands {move.moveName} {leadIndicator}{stanceWarning} but BLOCKED!{guardInfo}");
             AddToCombatLog($"    Blocked: {dmg.damageBlocked:F1} ({blockPct:F0}%) | Through: {dmg.damageTaken:F1} | Stamina drained: {dmg.staminaDrained}");
             AddToCombatLog($"    Guard: {defender.blockValue:F0}/{defender.maxBlockValue:F0}");
         }

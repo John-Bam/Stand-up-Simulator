@@ -1,5 +1,12 @@
 using UnityEngine;
 
+public enum GuardZone
+{
+    None,
+    High,
+    Low
+}
+
 public class CombatCalculator
 {
     // Calculate initiative for turn order
@@ -49,12 +56,16 @@ public class CombatCalculator
         hitChance -= defender.GetEffectiveStat(defender.HeadMovement, "headMovement") * 4f;
         hitChance -= defender.GetEffectiveStat(defender.FootWork, "footwork") * 3f;
 
-        // Guard bonus - scales with block value
+        // Guard bonus - scales with block value and guard zone
         if (defender.isGuarding)
         {
             float maxBlock = 10f + 10f * defender.Block;
             float blockEffectiveness = defender.blockValue / maxBlock;
             float guardBonus = Mathf.Lerp(10f, 25f, blockEffectiveness);
+
+            // Guard zone effectiveness on evasion
+            guardBonus *= GetGuardZoneHitModifier(defender.guardZone, move.targetZone);
+
             hitChance -= guardBonus;
         }
 
@@ -70,6 +81,38 @@ public class CombatCalculator
 
         float roll = Random.Range(0f, 100f);
         return roll < hitChance;
+    }
+
+    // Returns a multiplier for how effective the guard zone is vs the attack zone
+    private static float GetGuardZoneHitModifier(GuardZone guardZone, TargetZone targetZone)
+    {
+        switch (guardZone)
+        {
+            case GuardZone.High:
+                if (targetZone == TargetZone.Head) return 1.5f;      // High guard is great vs head
+                return 0.3f;                                           // But weak vs body/legs
+            case GuardZone.Low:
+                if (targetZone == TargetZone.Body || targetZone == TargetZone.Legs) return 1.5f; // Low guard protects body/legs
+                return 0.3f;                                           // But weak vs head
+            default:
+                return 1.0f; // No zone = standard
+        }
+    }
+
+    // Returns a multiplier for how effective the guard zone is at blocking damage
+    private static float GetGuardZoneDamageModifier(GuardZone guardZone, TargetZone targetZone)
+    {
+        switch (guardZone)
+        {
+            case GuardZone.High:
+                if (targetZone == TargetZone.Head) return 1.4f;
+                return 0.25f;
+            case GuardZone.Low:
+                if (targetZone == TargetZone.Body || targetZone == TargetZone.Legs) return 1.4f;
+                return 0.25f;
+            default:
+                return 1.0f;
+        }
     }
 
     // Calculate damage WITH block processing
@@ -117,12 +160,16 @@ public class CombatCalculator
             // Pass attacker's punch power for guard degradation
             float attackerPunchPower = attacker.GetEffectiveStat(attacker.PunchPower, "punchPower");
 
-            defender.BlockDamage(rawDamage, attackerPunchPower,
+            // Calculate zone-modified block
+            float zoneModifier = GetGuardZoneDamageModifier(defender.guardZone, move.targetZone);
+
+            defender.BlockDamage(rawDamage, attackerPunchPower, zoneModifier,
                 out result.damageBlocked,
                 out result.damageTaken,
                 out result.staminaDrained);
 
             result.wasBlocked = true;
+            result.guardZoneMatch = (zoneModifier > 1f);
         }
         else
         {
@@ -130,6 +177,7 @@ public class CombatCalculator
             result.damageBlocked = 0f;
             result.staminaDrained = 0;
             result.wasBlocked = false;
+            result.guardZoneMatch = false;
         }
 
         return result;
@@ -165,4 +213,5 @@ public struct DamageResult
     public float damageTaken;
     public int staminaDrained;
     public bool wasBlocked;
+    public bool guardZoneMatch; // True if the guard zone matched the attack zone
 }

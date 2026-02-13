@@ -85,11 +85,23 @@ void InitializeMoves()
     movementMoves.Add(new Move("Rush Forward", Speed: 5, Recovery: 1, Energy: 8, moveAmount: 2));
     movementMoves.Add(new Move("Retreat", Speed: 6, Recovery: 1, Energy: 6, moveAmount: 2));
 
-    // GUARD
-    Move guardMove = new Move("Guard", MoveCategory.Guard,
+    // HIGH GUARD - strong vs head attacks, weak vs body/legs
+    Move highGuard = new Move("High Guard", MoveCategory.HighGuard,
         Speed: 10, Power: 0, Energy: 0, Recovery: 0,
         optDist: 0, minDist: 0, maxDist: 0);
-    specialMoves.Add(guardMove);
+    specialMoves.Add(highGuard);
+
+    // LOW GUARD - strong vs body/leg attacks, weak vs head
+    Move lowGuard = new Move("Low Guard", MoveCategory.LowGuard,
+        Speed: 10, Power: 0, Energy: 0, Recovery: 0,
+        optDist: 0, minDist: 0, maxDist: 0);
+    specialMoves.Add(lowGuard);
+
+    // WAIT - recover stamina, no block
+    Move waitMove = new Move("Wait", MoveCategory.Wait,
+        Speed: 10, Power: 0, Energy: 0, Recovery: 0,
+        optDist: 0, minDist: 0, maxDist: 0);
+    specialMoves.Add(waitMove);
 
     // STANCE SWITCH
     Move switchStance = new Move("Switch Stance", MoveCategory.StanceSwitch,

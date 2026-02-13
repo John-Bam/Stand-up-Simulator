@@ -8,7 +8,10 @@ public enum MoveCategory
     Elbow,
     Movement,
     Guard,
-    StanceSwitch
+    StanceSwitch,
+    HighGuard,
+    LowGuard,
+    Wait
 }
 
 public enum TargetZone

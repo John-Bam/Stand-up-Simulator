@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System;
 using System.Collections.Generic;
 
@@ -58,13 +58,14 @@ public class Fighter
     private float maxHeadHealth;
     private float maxBodyHealth;
     private float maxLegHealth;
-    private float maxStamina;
+    public float maxStamina;
     public float maxBlockValue;
 
     // Combat state
     public bool isRocked = false;
     public bool isStunned = false;
     public bool isGuarding = false;
+    public GuardZone guardZone = GuardZone.None;
     public int recoveryPenalty = 0;
     public int currentDistance = 5;
 
@@ -96,23 +97,23 @@ public class Fighter
 
     public void InitializePools()
     {
-        // head health = 10 + 5 × star
+        // head health = 10 + 5 ï¿½ star
         maxHeadHealth = 10f + (5f * HeadHealth);
         headHealth = maxHeadHealth;
 
-        // body health = 15 + 10 × star
+        // body health = 15 + 10 ï¿½ star
         maxBodyHealth = 15f + (10f * BodyHealth);
         bodyHealth = maxBodyHealth;
 
-        // leg health = 15 + 5 × star
+        // leg health = 15 + 5 ï¿½ star
         maxLegHealth = 15f + (5f * LegHealth);
         legHealth = maxLegHealth;
 
-        // stamina = 10 + 5 × star (Cardio stat)
+        // stamina = 10 + 5 ï¿½ star (Cardio stat)
         maxStamina = 10f + (5f * Cardio);
         stamina = maxStamina;
 
-        // block = 10 + 10 × star
+        // block = 10 + 10 ï¿½ star
         maxBlockValue = 10f + (10f * Block);
         blockValue = maxBlockValue;
     }
@@ -153,7 +154,7 @@ public class Fighter
     {
         if (!IsInWrongStance()) return 1.0f;
 
-        // Penalty = 40% - (8% × stance stat)
+        // Penalty = 40% - (8% ï¿½ stance stat)
         float penaltyPercent = 40f - (8f * StanceSwitch);
         penaltyPercent = Mathf.Max(0f, penaltyPercent);
 
@@ -202,7 +203,14 @@ public class Fighter
     }
 
     // Block damage with punch power affecting guard degradation
+    // Overload for backward compatibility
     public void BlockDamage(float incomingDamage, float attackerPunchPower, out float damageBlocked, out float damageTaken, out int staminaDrained)
+    {
+        BlockDamage(incomingDamage, attackerPunchPower, 1.0f, out damageBlocked, out damageTaken, out staminaDrained);
+    }
+
+    // Block damage with guard zone modifier
+    public void BlockDamage(float incomingDamage, float attackerPunchPower, float zoneModifier, out float damageBlocked, out float damageTaken, out int staminaDrained)
     {
         if (!isGuarding || blockValue <= 0)
         {
@@ -214,6 +222,12 @@ public class Fighter
 
         float blockEffectiveness = blockValue / maxBlockValue;
         float blockPercentage = Mathf.Lerp(0.4f, 0.8f, blockEffectiveness);
+
+        // Apply guard zone modifier
+        // > 1.0 = correct guard zone (blocks more)
+        // < 1.0 = wrong guard zone (blocks less)
+        blockPercentage *= zoneModifier;
+        blockPercentage = Mathf.Clamp01(blockPercentage);
 
         damageBlocked = incomingDamage * blockPercentage;
         damageTaken = incomingDamage - damageBlocked;
@@ -257,6 +271,7 @@ public class Fighter
         blockValue += 10f;
         if (blockValue > maxBlockValue)
             blockValue = maxBlockValue;
+        // guardZone is set by GameManager after calling this
     }
 
     private void CheckRocked()
@@ -299,6 +314,8 @@ public class Fighter
     {
         RecoverStamina(Recovery * 3);
         RecoverBlockValue();
+        guardZone = GuardZone.None;
+        isGuarding = false;
     }
 
     public void ResetRoundStats()
@@ -391,7 +408,15 @@ public class Fighter
         }
 
         if (isRocked) status += " [ROCKED]";
-        if (isGuarding) status += " [GUARDING]";
+        if (isGuarding)
+        {
+            if (guardZone == GuardZone.High)
+                status += " [HIGH GUARD]";
+            else if (guardZone == GuardZone.Low)
+                status += " [LOW GUARD]";
+            else
+                status += " [GUARDING]";
+        }
 
         return status;
     }
