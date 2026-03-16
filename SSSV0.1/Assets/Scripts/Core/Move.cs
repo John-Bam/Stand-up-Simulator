@@ -23,9 +23,9 @@ public enum TargetZone
 
 public enum StrikeHand
 {
-    Lead,      // Front hand/leg
-    Rear,      // Back hand/leg
-    Both       // Doesn't matter
+    Lead,
+    Rear,
+    Both
 }
 
 [System.Serializable]
@@ -34,7 +34,6 @@ public class Move
     public string moveName;
     public MoveCategory category;
 
-    // Core stats
     public int speed;
     public float power;
     public int recovery;
@@ -49,7 +48,7 @@ public class Move
     public bool isMovement;
     public int movementAmount;
 
-    // Constructor for attack moves
+    // Constructor for attack/utility moves
     public Move(string name, MoveCategory cat, int Speed, float Power, int Energy, int Recovery,
                 int optDist, int minDist, int maxDist, TargetZone target = TargetZone.Head,
                 StrikeHand hand = StrikeHand.Both)
@@ -68,6 +67,7 @@ public class Move
         isMovement = false;
         movementAmount = 0;
     }
+
     // Constructor for movement moves
     public Move(string name, int Speed, int Recovery, int Energy, int moveAmount)
     {
@@ -84,23 +84,18 @@ public class Move
         isMovement = true;
         movementAmount = moveAmount;
     }
-    // Get speed with lead bonus
+
     public int GetEffectiveSpeed(bool isLead)
     {
         if (strikeHand == StrikeHand.Lead && isLead)
-        {
-            return speed + 2; // +2 speed bonus for lead strikes
-        }
+            return speed + 2;
         return speed;
     }
 
-    // Get recovery with lead bonus
     public int GetEffectiveRecovery(bool isLead)
     {
         if (strikeHand == StrikeHand.Lead && isLead)
-        {
-            return Mathf.Max(0, recovery - 1); // -1 recovery penalty (less penalty is good)
-        }
+            return Mathf.Max(0, recovery - 1);
         return recovery;
     }
 }

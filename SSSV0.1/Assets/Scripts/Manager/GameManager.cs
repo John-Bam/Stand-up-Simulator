@@ -41,13 +41,9 @@ public class GameManager : MonoBehaviour
     void Awake()
     {
         if (Instance == null)
-        {
             Instance = this;
-        }
         else
-        {
             Destroy(gameObject);
-        }
     }
 
     void Start()
@@ -72,7 +68,6 @@ public class GameManager : MonoBehaviour
 
     void InitializeFighters()
     {
-        // PLAYER - Orthodox stance - Using half-star values
         playerFighter = new Fighter("Player", Stance.Orthodox);
         playerFighter.HeadHealth = 3.5f;
         playerFighter.BodyHealth = 4f;
@@ -94,7 +89,6 @@ public class GameManager : MonoBehaviour
         playerFighter.CutResistance = 3f;
         playerFighter.InitializePools();
 
-        // AI - Southpaw stance - Using half-star values
         aiFighter = new Fighter("AI Opponent", Stance.Southpaw);
         aiFighter.HeadHealth = 3f;
         aiFighter.BodyHealth = 3.5f;
@@ -118,8 +112,8 @@ public class GameManager : MonoBehaviour
 
         AddToCombatLog("=== FIGHT START ===");
         AddToCombatLog($"{playerFighter.fighterName} [{playerFighter.currentStance}] vs {aiFighter.fighterName} [{aiFighter.currentStance}]");
-        AddToCombatLog($"3 Fight Rounds × 5 Rounds Each");
-        AddToCombatLog($"3 Actions Per Turn\n");
+        AddToCombatLog("3 Fight Rounds x 5 Rounds Each");
+        AddToCombatLog("3 Actions Per Turn\n");
     }
 
     void ShowMoveSelection()
@@ -141,13 +135,9 @@ public class GameManager : MonoBehaviour
             string buttonText = $"<b>{move.moveName}</b>";
 
             if (move.strikeHand == StrikeHand.Lead)
-            {
-                buttonText += " 🔵";
-            }
+                buttonText += " <color=#4FC3F7>[L]</color>";
             else if (move.strikeHand == StrikeHand.Rear)
-            {
-                buttonText += " 🔴";
-            }
+                buttonText += " <color=#EF5350>[R]</color>";
 
             buttonText += "\n";
 
@@ -215,9 +205,7 @@ public class GameManager : MonoBehaviour
         if (playerFighter.actionsRemaining == 0)
         {
             if (confirmActionsButton != null)
-            {
                 confirmActionsButton.gameObject.SetActive(true);
-            }
         }
     }
 
@@ -240,7 +228,7 @@ public class GameManager : MonoBehaviour
 
         if (playerHasSelected && aiHasSelected)
         {
-            Invoke("ResolveTurn", 1f);
+            Invoke(nameof(ResolveTurn), 1f);
         }
     }
 
@@ -254,16 +242,12 @@ public class GameManager : MonoBehaviour
 
             Move chosenMove = null;
 
-            // Very low stamina: Wait to recover
             if (aiFighter.stamina < 15 && i == 0)
             {
                 chosenMove = availableMoves.Find(m => m.category == MoveCategory.Wait);
             }
-            // Low-ish stamina: guard up
             else if (aiFighter.stamina < 25 && i == 0)
             {
-                // Pick guard type based on distance
-                // At range, expect head kicks; up close, expect body work
                 if (currentDistance >= 3)
                     chosenMove = availableMoves.Find(m => m.category == MoveCategory.HighGuard);
                 else
@@ -372,7 +356,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Invoke("ShowMoveSelection", 2f);
+            Invoke(nameof(ShowMoveSelection), 2f);
         }
     }
 
@@ -403,13 +387,12 @@ public class GameManager : MonoBehaviour
             currentDistance = CombatCalculator.CalculateNewDistance(currentDistance, move.movementAmount, isClosing);
 
             string direction = isClosing ? "closer" : "back";
-            AddToCombatLog($"  {attacker.fighterName} moves {direction}! Distance: {oldDistance} → {currentDistance}");
+            AddToCombatLog($"  {attacker.fighterName} moves {direction}! Distance: {oldDistance} -> {currentDistance}");
 
             if (isClosing) attacker.aggression += move.movementAmount;
             return;
         }
 
-        // HIGH GUARD
         if (move.category == MoveCategory.HighGuard)
         {
             attacker.ResetGuard();
@@ -420,7 +403,6 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // LOW GUARD
         if (move.category == MoveCategory.LowGuard)
         {
             attacker.ResetGuard();
@@ -431,7 +413,6 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // WAIT - recover stamina, no blocking
         if (move.category == MoveCategory.Wait)
         {
             int recovered = Mathf.RoundToInt(8f + attacker.Cardio * 1.5f);
@@ -440,7 +421,6 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // Legacy guard fallback
         if (move.category == MoveCategory.Guard)
         {
             attacker.ResetGuard();
@@ -451,6 +431,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // STRIKE
         attacker.strikesAttempted++;
 
         bool hit = CombatCalculator.CalculateHitSuccess(attacker, defender, move, currentDistance);
@@ -498,14 +479,10 @@ public class GameManager : MonoBehaviour
             AddToCombatLog($"    Damage: {dmg.damageTaken:F1} to {move.targetZone}");
 
             if (move.targetZone == TargetZone.Body)
-            {
                 AddToCombatLog($"    Body shot drains stamina!");
-            }
 
             if (defender.isRocked)
-            {
                 AddToCombatLog($"    {defender.fighterName} is ROCKED!");
-            }
         }
     }
 
@@ -531,7 +508,7 @@ public class GameManager : MonoBehaviour
         {
             UpdateRoundDisplay();
             UpdateScorecard();
-            Invoke("ShowMoveSelection", 2f);
+            Invoke(nameof(ShowMoveSelection), 2f);
         }
     }
 
@@ -542,7 +519,7 @@ public class GameManager : MonoBehaviour
         playerFighter.StartOfFightRoundRecovery();
         aiFighter.StartOfFightRoundRecovery();
 
-        AddToCombatLog($"Both fighters recover stamina!");
+        AddToCombatLog("Both fighters recover stamina!");
 
         currentFightRound++;
 
@@ -554,13 +531,13 @@ public class GameManager : MonoBehaviour
         {
             UpdateRoundDisplay();
             UpdateScorecard();
-            Invoke("ShowMoveSelection", 3f);
+            Invoke(nameof(ShowMoveSelection), 3f);
         }
     }
 
     void EndMatch()
     {
-        AddToCombatLog($"\n========== MATCH COMPLETE ==========");
+        AddToCombatLog("\n========== MATCH COMPLETE ==========");
 
         int playerTotal = 0;
         int aiTotal = 0;
@@ -584,11 +561,11 @@ public class GameManager : MonoBehaviour
         AddToCombatLog($"{aiFighter.fighterName}: {aiTotal}");
 
         if (playerTotal > aiTotal)
-            AddToCombatLog($"\n🏆 {playerFighter.fighterName} WINS BY DECISION! 🏆");
+            AddToCombatLog($"\n{playerFighter.fighterName} WINS BY DECISION!");
         else if (aiTotal > playerTotal)
-            AddToCombatLog($"\n🏆 {aiFighter.fighterName} WINS BY DECISION! 🏆");
+            AddToCombatLog($"\n{aiFighter.fighterName} WINS BY DECISION!");
         else
-            AddToCombatLog($"\n🤝 DRAW! 🤝");
+            AddToCombatLog("\nDRAW!");
 
         moveSelectionPanel.SetActive(false);
         if (restartButton != null) restartButton.gameObject.SetActive(true);
@@ -598,7 +575,7 @@ public class GameManager : MonoBehaviour
     {
         if (playerFighter.IsKnockedOut())
         {
-            AddToCombatLog("\n🥊 KNOCKOUT! AI WINS! 🥊");
+            AddToCombatLog("\nKNOCKOUT! AI WINS!");
             moveSelectionPanel.SetActive(false);
             if (restartButton != null) restartButton.gameObject.SetActive(true);
             if (confirmActionsButton != null) confirmActionsButton.gameObject.SetActive(false);
@@ -606,7 +583,7 @@ public class GameManager : MonoBehaviour
         }
         else if (aiFighter.IsKnockedOut())
         {
-            AddToCombatLog("\n🥊 KNOCKOUT! PLAYER WINS! 🥊");
+            AddToCombatLog("\nKNOCKOUT! PLAYER WINS!");
             moveSelectionPanel.SetActive(false);
             if (restartButton != null) restartButton.gameObject.SetActive(true);
             if (confirmActionsButton != null) confirmActionsButton.gameObject.SetActive(false);
@@ -622,9 +599,7 @@ public class GameManager : MonoBehaviour
             actionCountText.text = $"Actions Remaining: {playerFighter.actionsRemaining}/3";
 
             if (playerFighter.actionsRemaining == 0)
-            {
-                actionCountText.text += "\n<color=green>✓ Ready to confirm!</color>";
-            }
+                actionCountText.text += "\n<color=green>Ready to confirm!</color>";
         }
     }
 

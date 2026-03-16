@@ -1,11 +1,11 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 
 public enum Stance
 {
-    Orthodox,    // Left foot forward (right-handed)
-    Southpaw     // Right foot forward (left-handed)
+    Orthodox,
+    Southpaw
 }
 
 [Serializable]
@@ -13,8 +13,8 @@ public class Fighter
 {
     public string fighterName;
 
-    // BASE STATS (2.0-5.0 STARS with 0.5 increments) - CamelCase naming
-    [Header("Base Stats (2.0-5.0 Stars, 0.5 increments)")]
+    // BASE STATS (2.0-5.0 stars, 0.5 increments)
+    [Header("Base Stats (2.0-5.0 Stars)")]
     [Range(2f, 5f)] public float HeadHealth = 2f;
     [Range(2f, 5f)] public float BodyHealth = 2f;
     [Range(2f, 5f)] public float LegHealth = 2f;
@@ -23,8 +23,7 @@ public class Fighter
     [Range(2f, 5f)] public float Recovery = 2f;
     [Range(2f, 5f)] public float CutResistance = 2f;
 
-    // Striking Stats (2.0-5.0 stars)
-    [Header("Striking Stats (2.0-5.0 Stars, 0.5 increments)")]
+    [Header("Striking Stats (2.0-5.0 Stars)")]
     [Range(2f, 5f)] public float PunchSpeed = 2f;
     [Range(2f, 5f)] public float PunchPower = 2f;
     [Range(2f, 5f)] public float KickSpeed = 2f;
@@ -33,21 +32,19 @@ public class Fighter
     [Range(2f, 5f)] public float HeadMovement = 2f;
     [Range(2f, 5f)] public float Accuracy = 2f;
 
-    // Grappling Stats (2.0-5.0 stars)
-    [Header("Grappling Stats (2.0-5.0 Stars, 0.5 increments)")]
+    [Header("Grappling Stats (2.0-5.0 Stars)")]
     [Range(2f, 5f)] public float Clinch = 2f;
     [Range(2f, 5f)] public float GrappleDefense = 2f;
     [Range(2f, 5f)] public float GrappleOffense = 2f;
 
-    // Stance stat
-    [Header("Stance (2.0-5.0 Stars, 0.5 increments)")]
-    [Range(2f, 5f)] public float StanceSwitch = 2f;  // FIXED: renamed from stanceStat
+    [Header("Stance (2.0-5.0 Stars)")]
+    [Range(2f, 5f)] public float StanceSwitch = 2f;
 
-    // STANCE SYSTEM
+    // Stance system
     public Stance naturalStance = Stance.Orthodox;
     public Stance currentStance = Stance.Orthodox;
 
-    // CALCULATED POOLS (lowercase for runtime values)
+    // Calculated pools
     [Header("Current Pools")]
     public float headHealth;
     public float bodyHealth;
@@ -69,7 +66,7 @@ public class Fighter
     public int recoveryPenalty = 0;
     public int currentDistance = 5;
 
-    // THREE ACTIONS PER TURN
+    // Actions per turn
     [NonSerialized] public List<Move> selectedActions = new List<Move>(3);
     [NonSerialized] public int actionsRemaining = 3;
 
@@ -97,44 +94,35 @@ public class Fighter
 
     public void InitializePools()
     {
-        // head health = 10 + 5 � star
         maxHeadHealth = 10f + (5f * HeadHealth);
         headHealth = maxHeadHealth;
 
-        // body health = 15 + 10 � star
         maxBodyHealth = 15f + (10f * BodyHealth);
         bodyHealth = maxBodyHealth;
 
-        // leg health = 15 + 5 � star
         maxLegHealth = 15f + (5f * LegHealth);
         legHealth = maxLegHealth;
 
-        // stamina = 10 + 5 � star (Cardio stat)
         maxStamina = 10f + (5f * Cardio);
         stamina = maxStamina;
 
-        // block = 10 + 10 � star
         maxBlockValue = 10f + (10f * Block);
         blockValue = maxBlockValue;
     }
 
-    // Check if below 50% stamina
     public bool IsFatigued()
     {
         return stamina < (maxStamina * 0.5f);
     }
 
-    // Get effective stat with fatigue penalty
     public float GetEffectiveStat(float baseStat, string statName)
     {
-        // Health, cardio, and recovery are NOT penalized
         if (statName == "headHealth" || statName == "bodyHealth" ||
             statName == "legHealth" || statName == "cardio" || statName == "recovery")
         {
             return baseStat;
         }
 
-        // If fatigued, reduce stat by 0.5 (minimum 1.0)
         if (IsFatigued())
         {
             return Mathf.Max(1f, baseStat - 0.5f);
@@ -143,32 +131,27 @@ public class Fighter
         return baseStat;
     }
 
-    // Check if in wrong stance
     public bool IsInWrongStance()
     {
         return currentStance != naturalStance;
     }
 
-    // Calculate wrong stance damage penalty
     public float GetWrongStancePenalty()
     {
         if (!IsInWrongStance()) return 1.0f;
 
-        // Penalty = 40% - (8% � stance stat)
         float penaltyPercent = 40f - (8f * StanceSwitch);
         penaltyPercent = Mathf.Max(0f, penaltyPercent);
 
         return 1f - (penaltyPercent / 100f);
     }
 
-    // Switch stance
     public void SwitchStance()
     {
         currentStance = (currentStance == Stance.Orthodox) ? Stance.Southpaw : Stance.Orthodox;
         stanceSwitches++;
     }
 
-    // Take damage with body stamina drain
     public void TakeDamage(string target, float damage)
     {
         totalDamageTaken += damage;
@@ -184,15 +167,11 @@ public class Fighter
                 bodyHealth -= damage;
                 if (bodyHealth <= 0) bodyHealth = 0;
 
-                // BODY HITS DRAIN STAMINA
                 float staminaDrain = damage * 0.5f;
-
-                // If below 50% stamina, drain more
                 if (IsFatigued())
                 {
                     staminaDrain *= 1.5f;
                 }
-
                 UseStamina(staminaDrain);
                 break;
             case "legs":
@@ -202,14 +181,13 @@ public class Fighter
         }
     }
 
-    // Block damage with punch power affecting guard degradation
-    // Overload for backward compatibility
+    // Backward-compatible overload
     public void BlockDamage(float incomingDamage, float attackerPunchPower, out float damageBlocked, out float damageTaken, out int staminaDrained)
     {
         BlockDamage(incomingDamage, attackerPunchPower, 1.0f, out damageBlocked, out damageTaken, out staminaDrained);
     }
 
-    // Block damage with guard zone modifier
+    // Guard zone version
     public void BlockDamage(float incomingDamage, float attackerPunchPower, float zoneModifier, out float damageBlocked, out float damageTaken, out int staminaDrained)
     {
         if (!isGuarding || blockValue <= 0)
@@ -223,9 +201,6 @@ public class Fighter
         float blockEffectiveness = blockValue / maxBlockValue;
         float blockPercentage = Mathf.Lerp(0.4f, 0.8f, blockEffectiveness);
 
-        // Apply guard zone modifier
-        // > 1.0 = correct guard zone (blocks more)
-        // < 1.0 = wrong guard zone (blocks less)
         blockPercentage *= zoneModifier;
         blockPercentage = Mathf.Clamp01(blockPercentage);
 
@@ -235,7 +210,6 @@ public class Fighter
         staminaDrained = Mathf.CeilToInt(damageBlocked * 0.5f);
         UseStamina(staminaDrained);
 
-        // PUNCH POWER AFFECTS GUARD DEGRADATION
         float baseDegradation = damageBlocked * 0.3f;
         float powerBonus = attackerPunchPower * 2f;
         float totalDegradation = baseDegradation + powerBonus;
@@ -271,7 +245,6 @@ public class Fighter
         blockValue += 10f;
         if (blockValue > maxBlockValue)
             blockValue = maxBlockValue;
-        // guardZone is set by GameManager after calling this
     }
 
     private void CheckRocked()
@@ -392,15 +365,8 @@ public class Fighter
                $"Head:{headHealth:F0}/{maxHeadHealth:F0} Body:{bodyHealth:F0}/{maxBodyHealth:F0} Legs:{legHealth:F0}/{maxLegHealth:F0}\n" +
                $"Stamina:{stamina:F0}/{maxStamina:F0}";
 
-        if (IsFatigued())
-        {
-            status += " [FATIGUED]";
-        }
-
-        if (IsInWrongStance())
-        {
-            status += " [WRONG STANCE]";
-        }
+        if (IsFatigued()) status += " [FATIGUED]";
+        if (IsInWrongStance()) status += " [WRONG STANCE]";
 
         if (isGuarding || blockValue < maxBlockValue)
         {
@@ -423,35 +389,16 @@ public class Fighter
 
     public string GetGuardStatus()
     {
-        if (blockValue >= 80f)
-            return "STRONG";
-        else if (blockValue >= 50f)
-            return "SOLID";
-        else if (blockValue >= 20f)
-            return "WEAKENED";
-        else
-            return "BROKEN";
+        if (blockValue >= 80f) return "STRONG";
+        else if (blockValue >= 50f) return "SOLID";
+        else if (blockValue >= 20f) return "WEAKENED";
+        else return "BROKEN";
     }
 
-    public float GetStaminaPercentage()
-    {
-        return (stamina / maxStamina) * 100f;
-    }
-
-    public float GetHeadHealthPercentage()
-    {
-        return (headHealth / maxHeadHealth) * 100f;
-    }
-
-    public float GetBodyHealthPercentage()
-    {
-        return (bodyHealth / maxBodyHealth) * 100f;
-    }
-
-    public float GetLegHealthPercentage()
-    {
-        return (legHealth / maxLegHealth) * 100f;
-    }
+    public float GetStaminaPercentage() { return (stamina / maxStamina) * 100f; }
+    public float GetHeadHealthPercentage() { return (headHealth / maxHeadHealth) * 100f; }
+    public float GetBodyHealthPercentage() { return (bodyHealth / maxBodyHealth) * 100f; }
+    public float GetLegHealthPercentage() { return (legHealth / maxLegHealth) * 100f; }
 
     public void ResetActions()
     {
